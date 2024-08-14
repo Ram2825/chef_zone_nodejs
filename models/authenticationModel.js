@@ -1,21 +1,22 @@
 import { db } from "../config/dbConfig.js";
 import { execQuery } from "../utils/dbUtil.js";
 
-export const loginMdl = function (signupdata, callback) {
-  var QRY_TO_EXEC = `SELECT * FROM user where email= "${signupdata.userEmail}"`
-  // console.log("QRY_TO_EXEC", QRY_TO_EXEC)
-  if (callback && typeof callback == "function")
-    execQuery(
-      db,
-      QRY_TO_EXEC,
-      function (err, results) {
-        callback(err, results);
-        console.log()
-        return;
-      }
-    );
-  else return execQuery(db, QRY_TO_EXEC);
+// Helper function to execute a query with parameters
+const execQueryWithParams = (query, params, callback) => {
+  db.query(query, params, (err, results) => {
+    if (callback && typeof callback === "function") {
+      callback(err, results);
+    } else {
+      return err || results;
+    }
+  });
+};
 
+export const loginMdl = function (signupdata, callback) {
+  const QRY_TO_EXEC = `SELECT * FROM user WHERE email = ?`;
+  execQueryWithParams(QRY_TO_EXEC, [signupdata.userEmail], (err, results) => {
+    callback(err, results);
+  });
 };
 
 export const createUserMdl = function (userData, callback) {
@@ -27,12 +28,16 @@ export const createUserMdl = function (userData, callback) {
     password,
     address,
     mobileNo,
+    role,
+    bio,
+    specialty,
+    experienceYears,
   } = userData;
 
   // Check if the email already exists
-  const checkEmailQuery = `SELECT COUNT(*) AS emailCount FROM user WHERE email = "${email}"`;
+  const checkEmailQuery = `SELECT COUNT(*) AS emailCount FROM user WHERE email = ?`;
 
-  execQuery(db, checkEmailQuery, function (err, results) {
+  execQueryWithParams(checkEmailQuery, [email], (err, results) => {
     if (err) {
       // Handle the error
       if (callback && typeof callback === "function") {
@@ -44,9 +49,9 @@ export const createUserMdl = function (userData, callback) {
       const emailCount = results[0].emailCount;
 
       // Check if the username already exists
-      const checkUsernameQuery = `SELECT COUNT(*) AS usernameCount FROM user WHERE user_name = "${userName}"`;
+      const checkUsernameQuery = `SELECT COUNT(*) AS usernameCount FROM user WHERE user_name = ?`;
 
-      execQuery(db, checkUsernameQuery, function (err, results) {
+      execQueryWithParams(checkUsernameQuery, [userName], (err, results) => {
         if (err) {
           // Handle the error
           if (callback && typeof callback === "function") {
@@ -74,10 +79,35 @@ export const createUserMdl = function (userData, callback) {
               return usernameExistsError;
             }
           } else {
-            // Insert the new user since neither email nor username exists
-            const insertUserQuery = `INSERT INTO user (user_name, first_name, last_name, email, password, mobile_no, address) VALUES ("${userName}", "${firstName}", "${lastName}", "${email}", "${password}", "${mobileNo}", "${address}")`;
+            // Insert the new user
+            let insertUserQuery;
+            const queryParams = [
+              userName,
+              firstName,
+              lastName,
+              email,
+              password,
+              mobileNo,
+              address,
+              role,
+            ];
 
-            execQuery(db, insertUserQuery, function (err, results) {
+            if (role === 'chef') {
+              // Include chef-specific fields
+              insertUserQuery = `
+                INSERT INTO user (user_name, first_name, last_name, email, password, mobile_no, address, role, bio, specialty, experience_years)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `;
+              queryParams.push(bio, specialty, experienceYears);
+            } else {
+              // Insert without chef-specific fields
+              insertUserQuery = `
+                INSERT INTO user (user_name, first_name, last_name, email, password, mobile_no, address, role)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              `;
+            }
+
+            execQueryWithParams(insertUserQuery, queryParams, (err, results) => {
               if (callback && typeof callback === "function") {
                 callback(err, results);
               } else {
@@ -91,3 +121,9 @@ export const createUserMdl = function (userData, callback) {
   });
 };
 
+export const getAllChefsMdl = function (callback) {
+  const QRY_TO_EXEC = `SELECT * FROM user WHERE role = 'chef'`;
+  execQueryWithParams(QRY_TO_EXEC, [], (err, results) => {
+    callback(err, results);
+  });
+};

@@ -3,7 +3,7 @@ const app = express();
 
 import Jwt from 'jsonwebtoken';
 
-import { loginMdl, createUserMdl } from '../models/authenticationModel.js'
+import { loginMdl, createUserMdl ,getAllChefsMdl } from '../models/authenticationModel.js';
 
 
 export const LoginAppCtrl = function (req, res) {
@@ -58,6 +58,17 @@ export const createUserCtrl = (req, res) => {
             }
         } else {
             res.status(201).json({ status: 201, message: "User registered successfully" });
+        }
+    });
+};
+
+export const getAllChefsCtrl = (req, res) => {
+    getAllChefsMdl((err, results) => {
+        if (err) {
+            console.error("Error fetching chefs:", err);
+            res.status(500).json({ status: 500, message: "An error occurred while fetching chefs." });
+        } else {
+            res.status(200).json({ status: 200, message: "Chefs fetched successfully", results });
         }
     });
 };
