@@ -3,7 +3,7 @@ const app = express();
 
 import Jwt from 'jsonwebtoken';
 
-import { loginMdl } from '../models/authenticationModel.js'
+import { loginMdl, createUserMdl } from '../models/authenticationModel.js'
 
 
 export const LoginAppCtrl = function (req, res) {
@@ -40,6 +40,24 @@ export const LoginAppCtrl = function (req, res) {
             }
         } catch (err) {
             res.send({ status: 500, message: "Internal server error" })
+        }
+    });
+};
+
+export const createUserCtrl = (req, res) => {
+    const userData = req.body;
+
+    createUserMdl(userData, (err, results) => {
+        if (err) {
+            if (err.message === "Email already exists") {
+                res.status(400).json({ status: 400, message: "Email already exists" });
+            } else if (err.message === "Username already exists") {
+                res.status(400).json({ status: 400, message: "Username already exists" });
+            } else {
+                res.status(500).json({ status: 500, message: "Internal server error" });
+            }
+        } else {
+            res.status(201).json({ status: 201, message: "User registered successfully" });
         }
     });
 };

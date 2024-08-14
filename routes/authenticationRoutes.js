@@ -1,9 +1,11 @@
 import express from "express";
+import { LoginAppCtrl, createUserCtrl } from '../controllers/authenticationController.js';
+import jwt from 'jsonwebtoken';
 
-import { LoginAppCtrl} from '../controllers/authenticationController.js'
 
-const route = express.Router()
+const router = express.Router();
 
-route.post("/login", LoginAppCtrl)
+router.post("/login", LoginAppCtrl);
+router.post("/signup", createUserCtrl);
 
-export default route;
+export default router;
