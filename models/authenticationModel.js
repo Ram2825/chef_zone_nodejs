@@ -127,3 +127,89 @@ export const getAllChefsMdl = function (callback) {
     callback(err, results);
   });
 };
+
+// Model to get a user by ID
+export const getUserByIdMdl = function (userId, callback) {
+  const QRY_TO_EXEC = `SELECT * FROM user WHERE user_id = ?`;
+  execQueryWithParams(QRY_TO_EXEC, [userId], (err, results) => {
+    callback(err, results);
+  });
+};
+
+// Model to update a user by ID
+export const updateUserMdl = function (userId, userData, callback) {
+  const {
+    userName,
+    firstName,
+    lastName,
+    email,
+    password,
+    address,
+    mobileNo,
+    role,
+    bio,
+    specialty,
+    experienceYears,
+  } = userData;
+
+  // Build the query dynamically based on which fields are provided
+  let updateQuery = `UPDATE user SET `;
+  const queryParams = [];
+  if (userName) {
+    updateQuery += `user_name = ?, `;
+    queryParams.push(userName);
+  }
+  if (firstName) {
+    updateQuery += `first_name = ?, `;
+    queryParams.push(firstName);
+  }
+  if (lastName) {
+    updateQuery += `last_name = ?, `;
+    queryParams.push(lastName);
+  }
+  if (email) {
+    updateQuery += `email = ?, `;
+    queryParams.push(email);
+  }
+  if (password) {
+    updateQuery += `password = ?, `;
+    queryParams.push(password);
+  }
+  if (address) {
+    updateQuery += `address = ?, `;
+    queryParams.push(address);
+  }
+  if (mobileNo) {
+    updateQuery += `mobile_no = ?, `;
+    queryParams.push(mobileNo);
+  }
+  if (role) {
+    updateQuery += `role = ?, `;
+    queryParams.push(role);
+  }
+  if (bio) {
+    updateQuery += `bio = ?, `;
+    queryParams.push(bio);
+  }
+  if (specialty) {
+    updateQuery += `specialty = ?, `;
+    queryParams.push(specialty);
+  }
+  if (experienceYears) {
+    updateQuery += `experience_years = ?, `;
+    queryParams.push(experienceYears);
+  }
+
+  // Remove the trailing comma and space
+  updateQuery = updateQuery.slice(0, -2);
+  updateQuery += ` WHERE user_id = ?`;
+  queryParams.push(userId);
+
+  execQueryWithParams(updateQuery, queryParams, (err, results) => {
+    if (callback && typeof callback === "function") {
+      callback(err, results);
+    } else {
+      return err || results;
+    }
+  });
+};

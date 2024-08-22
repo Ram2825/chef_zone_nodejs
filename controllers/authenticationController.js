@@ -3,7 +3,7 @@ const app = express();
 
 import Jwt from 'jsonwebtoken';
 
-import { loginMdl, createUserMdl ,getAllChefsMdl } from '../models/authenticationModel.js';
+import { loginMdl, createUserMdl ,getAllChefsMdl, getUserByIdMdl, updateUserMdl } from '../models/authenticationModel.js';
 
 
 export const LoginAppCtrl = function (req, res) {
@@ -69,6 +69,37 @@ export const getAllChefsCtrl = (req, res) => {
             res.status(500).json({ status: 500, message: "An error occurred while fetching chefs." });
         } else {
             res.status(200).json({ status: 200, message: "Chefs fetched successfully", results });
+        }
+    });
+};
+
+// New Controller for Getting a User by ID
+export const getUserByIdCtrl = (req, res) => {
+    const userId = req.params.id; // Assuming the user ID is passed as a URL parameter
+
+    getUserByIdMdl(userId, (err, results) => {
+        if (err) {
+            console.error("Error fetching user by ID:", err);
+            res.status(500).json({ status: 500, message: "An error occurred while fetching the user." });
+        } else if (results.length === 0) {
+            res.status(404).json({ status: 404, message: "User not found." });
+        } else {
+            res.status(200).json({ status: 200, message: "User fetched successfully", user: results[0] });
+        }
+    });
+};
+
+// Update User Controller
+export const updateUserCtrl = (req, res) => {
+    const userId = req.params.id; // Assuming the user ID is passed as a URL parameter
+    const userData = req.body; // The updated user data
+
+    updateUserMdl(userId, userData, (err, results) => {
+        if (err) {
+            console.error("Error updating user:", err);
+            res.status(500).json({ status: 500, message: "An error occurred while updating the user." });
+        } else {
+            res.status(200).json({ status: 200, message: "User updated successfully" });
         }
     });
 };

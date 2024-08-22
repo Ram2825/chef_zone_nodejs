@@ -1,6 +1,5 @@
 import express from "express";
-import { LoginAppCtrl, createUserCtrl, getAllChefsCtrl } from '../controllers/authenticationController.js';
-import jwt from 'jsonwebtoken';
+import { LoginAppCtrl, createUserCtrl, getAllChefsCtrl, getUserByIdCtrl, updateUserCtrl } from '../controllers/authenticationController.js';
 
 
 const router = express.Router();
@@ -8,5 +7,7 @@ const router = express.Router();
 router.post("/login", LoginAppCtrl);
 router.post("/signup", createUserCtrl);
 router.get('/chefs', getAllChefsCtrl);
+router.get('/user/:id', getUserByIdCtrl);
+router.put('/user/:id', updateUserCtrl);
 
 export default router;
