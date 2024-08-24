@@ -55,7 +55,7 @@ app.post('/bookings', (req, res) => {
     });
 });
 // Update booking status
-app.post('/booking/:booking_id/status', (req, res) => {
+app.post('/bookings/:booking_id/status', (req, res) => {
     const { booking_id } = req.params;
     const { status } = req.body;
 
@@ -113,19 +113,20 @@ app.get('/bookings/chef/:chef_id', (req, res) => {
     });
 });
 
-// API to get bookings by chef_id
-app.get('/bookings/chef/:chef_id', (req, res) => {
-    const chefId = req.params.chef_id;
+// // API to get bookings by chef_id
+// app.get('/bookings/chef/:chef_id', (req, res) => {
+//     const chefId = req.params.chef_id;
 
-    const query = 'SELECT * FROM booking WHERE chef_id = ?';
-    db.query(query, [chefId], (err, results) => {
-        if (err) {
-            console.error('Error fetching bookings:', err);
-            return res.status(500).json({ status: 500, message: 'Internal Server Error' });
-        }
-        res.json({ status: 200, results });
-    });
-});
+//     const query = 'SELECT * FROM booking WHERE chef_id = ?';
+//     db.query(query, [chefId], (err, results) => {
+//         if (err) {
+//             console.error('Error fetching bookings:', err);
+//             return res.status(500).json({ status: 500, message: 'Internal Server Error' });
+//         }
+//         res.json({ status: 200, results });
+//     });
+// });
+
 
 // Update booking status
 app.patch('/bookings/:id', (req, res) => {
@@ -214,6 +215,20 @@ app.post('/chef_zone/reviews/:chef_id', (req, res) => {
     });
 });
 
+
+// API to get bookings by user_id
+app.get('/bookings/user/:user_id', (req, res) => {
+    const userId = req.params.user_id;
+
+    const query = 'SELECT * FROM booking WHERE user_id = ?';
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error('Error fetching bookings:', err);
+            return res.status(500).json({ status: 500, message: 'Internal Server Error' });
+        }
+        res.json({ status: 200, results });
+    });
+});
 
 app.use("/chef_zone/autenticate", autenticationRoute);
 
