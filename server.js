@@ -1,13 +1,30 @@
 import express from 'express';
-import bodyParser from "body-parser";
-import dotenv from "dotenv";
-const app = express();
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
 import cors from 'cors';
-import autenticationRoute from "./routes/authenticationRoutes.js"
+import multer from 'multer';
+import path from 'path';
+import autenticationRoute from './routes/authenticationRoutes.js';
 import { db } from './config/dbConfig.js';
 
 dotenv.config();
+
+const app = express();
+
+// Set up storage for multer
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/'); // specify the upload directory
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname)); // append the file extension
+    }
+});
+
+const upload = multer({ storage: storage });
+
 app.use(cors());
+
 
 // Middlewares
 app.use(express.json());
@@ -33,6 +50,9 @@ app.use(function (req, res, next) {
     }
     next();
 });
+
+// Serve static files from the 'uploads' directory
+app.use('/uploads', express.static('uploads'));
 
 app.post('/bookings', (req, res) => {
     const { user_id, chef_id, booking_date, booking_time, additional_notes } = req.body;
@@ -229,6 +249,103 @@ app.get('/bookings/user/:user_id', (req, res) => {
         res.json({ status: 200, results });
     });
 });
+
+
+app.get('/food_blog', (req, res) => {
+    // SQL query to select all blog posts along with the author's name
+    const query = `
+        SELECT 
+            fb.*,
+            CONCAT(u.first_name, ' ', u.last_name) AS author_name
+        FROM 
+            food_blog fb
+        JOIN 
+            user u ON fb.author_id = u.user_id
+    `;
+    
+    db.query(query, (err, results) => {
+        // console.log(results)
+        if (err) {
+            console.error('Error fetching blog posts:', err);
+            return res.status(500).json({ status: 500, message: 'Internal Server Error' });
+        }
+        res.json({ status: 200, results });
+    });
+});
+
+
+app.get('/food_blog/:post_id', (req, res) => {
+    const postId = req.params.post_id;
+
+    // SQL query to fetch a blog post by ID along with the author's name
+    const query = `
+        SELECT 
+            fb.*,
+            CONCAT(u.first_name, ' ', u.last_name) AS author_name
+        FROM 
+            food_blog fb
+        JOIN 
+            user u ON fb.author_id = u.user_id
+        WHERE 
+            fb.post_id = ?
+    `;
+    
+    db.query(query, [postId], (err, results) => {
+        if (err) {
+            console.error('Error fetching the blog post:', err);
+            return res.status(500).json({ status: 500, message: 'Internal Server Error' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ status: 404, message: 'Blog Post Not Found' });
+        }
+        res.json({ status: 200, result: results[0] });
+    });
+});
+
+
+// POST API to create a new blog post with optional image upload
+app.post('/food_blog', upload.single('image'), (req, res) => {
+    const { title, content, author_id, category, tags, ingredients, preparation_time, cooking_time, servings, difficulty } = req.body;
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const query = `
+        INSERT INTO food_blog 
+        (title, content, author_id, category, tags, ingredients, preparation_time, cooking_time, servings, difficulty, image_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [title, content, author_id, category, tags, ingredients, preparation_time, cooking_time, servings, difficulty, imageUrl];
+
+    db.query(query, values, (err, result) => {
+        if (err) {
+            console.error('Error creating new blog post:', err);
+            return res.status(500).json({ status: 500, message: 'Internal Server Error' });
+        }
+        res.json({ status: 201, message: 'Blog Post Created Successfully', postId: result.insertId });
+    });
+});
+
+app.get('/food_blog/:post_id', (req, res) => {
+    const postId = req.params.post_id;
+
+    // SQL query to fetch a single blog post by ID
+    const query = 'SELECT * FROM food_blog WHERE post_id = ?';
+
+    db.query(query, [postId], (err, results) => {
+        if (err) {
+            console.error('Error fetching the blog post:', err);
+            return res.status(500).json({ status: 500, message: 'Internal Server Error' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ status: 404, message: 'Blog Post Not Found' });
+        }
+
+        res.status(200).json({ status: 200, result: results[0] });
+    });
+});
+
+
 
 app.use("/chef_zone/autenticate", autenticationRoute);
 
