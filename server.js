@@ -236,11 +236,22 @@ app.post('/chef_zone/reviews/:chef_id', (req, res) => {
 });
 
 
-// API to get bookings by user_id
+// API to get bookings by user_id with chef_name
 app.get('/bookings/user/:user_id', (req, res) => {
     const userId = req.params.user_id;
 
-    const query = 'SELECT * FROM booking WHERE user_id = ?';
+    const query = `
+        SELECT 
+            b.*, 
+            CONCAT(u.first_name, ' ', u.last_name) AS chef_name
+        FROM 
+            booking b
+        JOIN 
+            user u ON b.chef_id = u.user_id
+        WHERE 
+            b.user_id = ?
+    `;
+
     db.query(query, [userId], (err, results) => {
         if (err) {
             console.error('Error fetching bookings:', err);
@@ -249,6 +260,7 @@ app.get('/bookings/user/:user_id', (req, res) => {
         res.json({ status: 200, results });
     });
 });
+
 
 
 app.get('/food_blog', (req, res) => {
